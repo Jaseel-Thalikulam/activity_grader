@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "nodemon": "^3.1.10",
+    "prompt-sync": "^4.2.0",
+    "telegram": "^2.25.15"
+  },
+  "type": "module",
+  "name": "bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests yet\"",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "Jaseel T A",
+  "license": "ISC",
+  "description": "Telegram moderation bot to detect spam/inappropriate content and auto-ban users."
+}
