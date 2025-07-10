@@ -1,10 +1,10 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
 import { NewMessage } from "telegram/events/NewMessage.js";
-import { Api } from "telegram/tl/index.js";
 import fs from "fs";
 import { secrets } from "../constants/constants.js";
-import { notifyUser } from "../helper/helpers.js";
+import { extractReactionContext } from "../util/reactionUtils.js";
+import { addPoints, subtractPoints } from "../repository/index.js";
 
 const ADMIN_ID = secrets.admin_id;
 
@@ -35,72 +35,40 @@ export async function Start() {
 
     console.log("🤖 Bot started successfully!");
 
-    // client.addEventHandler(async (event) => {
-    //   const message = event.message;
-    //   console.log("Message received:", message.text, message.peerId.userId);
-    // }, new NewMessage({}));
-
     client.addEventHandler(async (update) => {
       if (update.className !== "UpdateBotMessageReaction") return;
-      // console.log("Update received:", update);
-      // console.log("actor UserId:", update.actor.userId.value);
-      const actorId = update.actor.userId.value;
 
-      // console.log("peer UserId:", update.peer.userId.value);
-      const chatId =
-        update.peer?.userId || update.peer?.channelId || update.peer?.chatId;
-      const msgId = update.msgId;
-      // console.log(update)
-
+    
       try {
-        const messages = await client.getMessages(chatId, { ids: [msgId] });
-        const message = messages[0];
-        const senderId =
-          message.fromId?.userId?.value || message.fromId?.channelId?.value;
-        const sender = await client.getEntity(senderId);
-        const senderName = `${sender.firstName ?? ""} ${
-          sender.lastName ?? ""
-        }`.trim();
-        const user = await client.getEntity(actorId);
-        const senderUsername = sender.username ?? "(no username)";
-        const username = user.username ?? "(no username)";
+        const { senderName, senderUsername, fullName, username, senderId } =
+          await extractReactionContext(update, client);
 
-        const fullName = `${user.firstName ?? ""} ${
-          user.lastName ?? ""
-        }`.trim();
-
-        let updateStatus = update.newReactions.length > 0 ? true : false;
+        const updateStatus = update.newReactions.length > 0;
 
         if (updateStatus) {
           const reaction = update.newReactions[0];
+
+          addPoints(senderId);
+          
           console.log(
             `✅  ${fullName} (@${username}) added ${reaction.emoticon}  to a message from: ${senderName} (@${senderUsername})`
           );
         } else {
           const reaction = update.oldReactions[0];
+          subtractPoints(senderId);
           console.log(
             `❌  ${fullName} (@${username}) removed ${reaction.emoticon} from a message from: ${senderName} (@${senderUsername})`
           );
         }
-
-        // console.log(`👤 Reaction sent by: ${fullName} (@${username})`);
       } catch (err) {
         console.error("Failed to get user entity:", err);
       }
-
-      // if (update.newReactions && update.newReactions.length > 0) {
-      //   const reaction = update.newReactions[0];
-      //   console.log(`Reaction: ${reaction.emoticon}`);
-      // }
-
-      // console.log(
-      //   `💬 Reaction received in Chat ${chatId} on Message ${msgId}:`
-      // );
     });
 
     console.log("🤖 Bot is live and monitoring.");
   } catch (error) {
     console.error("⚠️ Error:", error);
-    await notifyUser(client, `⚠️ Error: ${error.message}`);
   }
 }
+
+

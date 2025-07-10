@@ -1,6 +1,8 @@
 import express from "express";
 import { secrets } from "./constants/constants.js";
 import { Start } from "./controller/start.js";
+import cron from "node-cron";
+import { getResults } from "./repository/index.js";
 
 const app = express();
 
@@ -15,3 +17,10 @@ function start() {
 }
 
 start();
+
+
+// Schedule a job every 2 minutes
+cron.schedule("*/2 * * * *", () => {
+  const results = getResults();
+  console.log("📊 Points Table:", results); // or save/send somewhere
+});
