@@ -5,6 +5,7 @@ import fs from "fs";
 import { secrets } from "../constants/constants.js";
 import { extractReactionContext } from "../util/reactionUtils.js";
 import { addPoints, subtractPoints } from "../repository/index.js";
+import { recognizeReactionsAndTrackPoints } from "./reactions.controller.js";
 
 const ADMIN_ID = secrets.admin_id;
 
@@ -22,53 +23,24 @@ export async function Start() {
     secrets.apiHash,
     { connectionRetries: 5 }
   );
-
   try {
     await client.start({
       botAuthToken: secrets.botToken,
       onError: (err) => console.log("Login error:", err),
     });
-
     // Save session to file
     const newSession = client.session.save();
     fs.writeFileSync("session.txt", newSession);
 
     console.log("🤖 Bot started successfully!");
 
-    client.addEventHandler(async (update) => {
-      if (update.className !== "UpdateBotMessageReaction") return;
+    recognizeReactionsAndTrackPoints(client);
 
     
-      try {
-        const { senderName, senderUsername, fullName, username, senderId } =
-          await extractReactionContext(update, client);
 
-        const updateStatus = update.newReactions.length > 0;
-
-        if (updateStatus) {
-          const reaction = update.newReactions[0];
-
-          addPoints(senderId);
-          
-          console.log(
-            `✅  ${fullName} (@${username}) added ${reaction.emoticon}  to a message from: ${senderName} (@${senderUsername})`
-          );
-        } else {
-          const reaction = update.oldReactions[0];
-          subtractPoints(senderId);
-          console.log(
-            `❌  ${fullName} (@${username}) removed ${reaction.emoticon} from a message from: ${senderName} (@${senderUsername})`
-          );
-        }
-      } catch (err) {
-        console.error("Failed to get user entity:", err);
-      }
-    });
 
     console.log("🤖 Bot is live and monitoring.");
   } catch (error) {
     console.error("⚠️ Error:", error);
   }
 }
-
-

@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { mongo } from "mongoose";
 dotenv.config();
 
 export const secrets = {
@@ -8,5 +9,5 @@ export const secrets = {
   apiId: process.env.API_ID,
   telegram_userId: process.env.TELEGRAM_USER_ID,
   admin_id: process.env.ADMIN_ID,
-
+  mongodb_url: process.env.MONGODB_URL,
 };
